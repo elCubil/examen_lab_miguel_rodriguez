@@ -20,7 +20,11 @@ export default function Login(){
             const response=await api.post("/login", {email, password});
             const token=response.data.token;
             localStorage.setItem("token", token);
+            alert("inicio de sesion exitoso");
             navigate("/search");
+        } catch (error) {
+            if (error.response.data.detail);
+            alert("error al iniciar sesion");
         }
 
 
