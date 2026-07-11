@@ -1,10 +1,23 @@
 import {Link} from "react-router-dom";
 import {useState} from "react";
+import api from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 
 export default function Login(){
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const navigate = useNavigate();
+
+    const login = async () => {
+        try {
+            const response = await api.post("/auth/login", { email, password });
+            console.log(response.data);
+            }catch(error){
+                console.log(error);
+            }
+
+        };
 
     return(
         <div className="min-h-screen flex items-center justify-center bg-base-200">
