@@ -1,0 +1,144 @@
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { register } from '../api/services';
+import type { RegisterRequest } from '../types';
+import type { AxiosError } from 'axios';
+
+export default function RegisterPage() {
+  const navigate = useNavigate();
+  const [form, setForm] = useState<RegisterRequest>({
+    email: '',
+    firstName: '',
+    lastName: '',
+    password: '',
+  });
+  const [errors, setErrors] = useState<Partial<RegisterRequest>>({});
+  const [apiError, setApiError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const validate = (): boolean => {
+    const newErrors: Partial<RegisterRequest> = {};
+    if (!form.email.trim()) newErrors.email = 'El email es requerido';
+    else if (!/\S+@\S+\.\S+/.test(form.email)) newErrors.email = 'Email inválido';
+    if (!form.firstName.trim()) newErrors.firstName = 'El nombre es requerido';
+    if (!form.lastName.trim()) newErrors.lastName = 'El apellido es requerido';
+    if (!form.password) newErrors.password = 'La contraseña es requerida';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    setErrors({ ...errors, [e.target.name]: '' });
+    setApiError('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      await register(form);
+      setSuccess(true);
+      setTimeout(() => navigate('/login'), 2000);
+    } catch (err) {
+      const axiosErr = err as AxiosError<{ detail?: string; message?: string }>;
+      const msg =
+        axiosErr.response?.data?.detail ||
+        axiosErr.response?.data?.message ||
+        'Error al registrar. Inténtalo de nuevo.';
+      setApiError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="page-center">
+      <div className="auth-card">
+        <div className="auth-header">
+          <h1>Crear cuenta</h1>
+          <p>Únete a Fly Away y empieza a volar</p>
+        </div>
+        <div className="auth-body">
+          {success && (
+            <div className="alert alert-success">
+              ✅ ¡Registro exitoso! Redirigiendo al login...
+            </div>
+          )}
+          {apiError && (
+            <div className="alert alert-error">
+              ⚠️ {apiError}
+            </div>
+          )}
+          {!success && (
+            <form onSubmit={handleSubmit} noValidate>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="firstName">Nombre</label>
+                  <input
+                    id="firstName"
+                    name="firstName"
+                    type="text"
+                    value={form.firstName}
+                    onChange={handleChange}
+                    className={errors.firstName ? 'input-error' : ''}
+                    placeholder="Juan"
+                  />
+                  {errors.firstName && <span style={{ color: 'var(--error)', fontSize: '.8rem' }}>{errors.firstName}</span>}
+                </div>
+                <div className="form-group">
+                  <label htmlFor="lastName">Apellido</label>
+                  <input
+                    id="lastName"
+                    name="lastName"
+                    type="text"
+                    value={form.lastName}
+                    onChange={handleChange}
+                    className={errors.lastName ? 'input-error' : ''}
+                    placeholder="Pérez"
+                  />
+                  {errors.lastName && <span style={{ color: 'var(--error)', fontSize: '.8rem' }}>{errors.lastName}</span>}
+                </div>
+              </div>
+              <div className="form-group">
+                <label htmlFor="email">Email</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  className={errors.email ? 'input-error' : ''}
+                  placeholder="juan@ejemplo.com"
+                />
+                {errors.email && <span style={{ color: 'var(--error)', fontSize: '.8rem' }}>{errors.email}</span>}
+              </div>
+              <div className="form-group">
+                <label htmlFor="password">Contraseña</label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  className={errors.password ? 'input-error' : ''}
+                  placeholder="Mínimo 8 caracteres"
+                />
+                {errors.password && <span style={{ color: 'var(--error)', fontSize: '.8rem' }}>{errors.password}</span>}
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                {loading ? <span className="spinner" /> : null}
+                {loading ? 'Registrando...' : 'Crear cuenta'}
+              </button>
+            </form>
+          )}
+          <p className="form-footer">
+            ¿Ya tienes cuenta? <Link to="/login" className="text-link">Inicia sesión</Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
