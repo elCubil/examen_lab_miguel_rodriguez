@@ -10,14 +10,19 @@ export default function Login(){
     const navigate = useNavigate();
 
     const login = async () => {
-        try {
-            const response = await api.post("/auth/login", { email, password });
-            console.log(response.data);
-            }catch(error){
-                console.log(error);
-            }
 
-        };
+        if (!email || !password){
+            alert("complete todos los campos");
+            return;
+        }
+
+        try{
+            const response=await api.post("/login", {email, password});
+            const token=response.data.token;
+            localStorage.setItem("token", token);
+            navigate("/search");
+        }
+
 
     return(
         <div className="min-h-screen flex items-center justify-center bg-base-200">
